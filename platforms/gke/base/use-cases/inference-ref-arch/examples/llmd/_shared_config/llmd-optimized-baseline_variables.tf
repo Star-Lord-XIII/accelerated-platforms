@@ -1,0 +1,149 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+locals {
+  llmd__ob_default_name = "llmd-${var.llmd_guide_name}"
+  #llmd_ob_release_name  = var.llmd_ob_release_name != null ? var.llmd_ob_release_name : "inference-scheduling"
+}
+
+variable "gateway_provider_name" {
+  default     = "gke"
+  description = "Gateway provider for llmd"
+  type        = string
+}
+
+variable "git_url_prefix" {
+  default     = "https://raw.githubusercontent.com"
+  description = "Prefix to the git url for llmd repo"
+  type        = string
+}
+
+variable "llmd_git_branch" {
+  default     = "main"
+  description = "Branch of the llmd repository."
+  type        = string
+}
+
+variable "llmd_git_org" {
+  default     = "llm-d"
+  description = "GitHub Organization where llmd repo is created."
+  type        = string
+}
+
+variable "llmd_git_repo" {
+  default     = "llm-d"
+  description = "Name of GitHub repository."
+  type        = string
+}
+
+variable "llmd_guide_name" {
+  default     = "optimized-baseline"
+  description = "llmd guide name."
+  type        = string
+}
+
+variable "kubernetes_version_router_templates" {
+  default     = "1.28.0"
+  description = "The Kubernetes version to use when templating."
+  type        = string
+}
+
+variable "llmd_ob_accelerator_type" {
+  default     = "rtx-pro-6000"
+  description = "accelerator type to serve the model on."
+  type        = string
+
+  validation {
+    condition = contains(
+      [
+        "l4",
+        "h100",
+        "h200",
+        "rtx-pro-6000",
+      ],
+      var.llmd_ob_accelerator_type
+    )
+    error_message = "'llmd_ob_accelerator_type' value is invalid"
+  }
+}
+
+variable "llmd_ob_huggingface_spc" {
+  default     = "huggingface-read-token"
+  description = "Name of the service provider class to store the huggingface secret"
+  type        = string
+}
+
+variable "llmd_ob_model_id" {
+  default     = "qwen/qwen3-32b"
+  description = "Id for the model to serve."
+  type        = string
+
+  validation {
+    condition = contains(
+      [
+        "google/gemma-3-1b-it",
+        "google/gemma-3-4b-it",
+        "google/gemma-3-27b-it",
+        "openai/gpt-oss-20b",
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "meta-llama/llama-3.3-70b-instruct",
+        "qwen/qwen3-32b",
+      ],
+      var.llmd_ob_model_id
+    )
+    error_message = "'llmd_ob_model_id' value is invalid"
+  }
+}
+
+variable "llmd_ob_ms_deployment_name" {
+  default     = null
+  description = "Model server deployment name"
+  type        = string
+}
+
+variable "llmd_router_chart" {
+  default     = "llm-d-router-gateway-dev"
+  description = "Helm chart repo that holds llm charts"
+  type        = string
+}
+
+variable "llmd_router_chart_repo" {
+  default     = "oci://ghcr.io/llm-d/charts"
+  description = "Helm chart for installing router"
+  type        = string
+}
+
+variable "llmd_router_chart_version" {
+  default     = "v0"
+  description = "Helm chart version for installing router"
+  type        = string
+}
+
+# variable "llmd_ob_release_name" {
+#   default     = null
+#   description = "Unique release name for the helm chart deployment."
+#   type        = any
+# }
+
+variable "skip_router_render_tests" {
+  default     = false
+  description = "If set, tests will not be rendered. By default, tests are rendered."
+  type        = bool
+}
+
+variable "validate_router_manifests" {
+  default     = false
+  description = "Validate the manifests against the Kubernetes cluster."
+  type        = bool
+}
