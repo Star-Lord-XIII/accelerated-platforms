@@ -19,11 +19,11 @@ In this guide, you will see how you can install llmd optimized-baseline well-lit
 path on GKE using our
 [GKE Inference reference implementation](/platforms/gke/base/use-cases/inference-ref-arch/terraform/README.md).
 The llm-d well-lit path provides you the instructions to create the
-optimized-baseline related resources but you still to to figure how to create
-your GKE cluster and underlying infrastructure dependencies such as
-inference-gateway, custom compute classes, storage for model download etc. This
-guide provides you the cohesive approach to build your infrastructure and apply
-llm-d optimization-baseline layer on top of it.
+optimized-baseline related resources but you still need to figure out how to
+create your GKE cluster and underlying infrastructure dependencies such as
+inference-gateway, custom compute classes for obtaining accelerators, storage
+for model download etc. This guide provides you the cohesive approach to build
+your infrastructure and apply llm-d optimization-baseline layer on top of it.
 
 ## Pull the source code
 
@@ -87,47 +87,35 @@ precedence over earlier ones:
   other than `qwen/qwen3-32b` which is the default model for this deployment.
 
   ```
-  llmd_model_id="<MODEL_ID>"
-  sed -i "/^llmd_model_id[[:blank:]]*=/{h;s|=.*|= \"${llmd_model_id}\"|};\${x;/^$/{s|.*|llmd_model_id=\"${llmd_model_id}\"|;H};x}" "${ACP_REPO_DIR}/platforms/gke/base/use-cases/inference-ref-arch/examples/llmd/_shared_config/llmd.auto.tfvars"
+  llmd_ob_model_id="<MODEL_ID>"
+  sed -i "/^llmd_ob_model_id[[:blank:]]*=/{h;s|=.*|= \"${llmd_ob_model_id}\"|};\${x;/^$/{s|.*|llmd_ob_model_id=\"${llmd_ob_model_id}\"|;H};x}" "${ACP_REPO_DIR}/platforms/gke/base/use-cases/inference-ref-arch/examples/llmd/_shared_config/llmd.auto.tfvars"
   ```
 
   Valid values for `MODEL_ID` are:
 
-  - `google/gemma-3-1b-it`
-  - `google/gemma-3-4b-it`
-  - `google/gemma-3-27b-it`
-  - `openai/gpt-oss-20b`
-  - `meta-llama/llama-4-scout-17b-16e-instruct`
-  - `meta-llama/llama-3.3-70b-instruct`
+  - `google/gemma-4-31b-it`
   - `qwen/qwen3-32b` **(default)**
 
 - In order to choose an accelerator and for the model you want to run, refer to
   the following table.
 
-  | Model                          | l4  | h100 | h200 | RTX Pro 6000 |
-  | ------------------------------ | --- | ---- | ---- | ------------ |
-  | gemma-3-1b-it                  | ✅  | ❌   | ❌   | ❌           |
-  | gemma-3-4b-it                  | ✅  | ❌   | ❌   | ❌           |
-  | gemma-3-27b-it                 | ✅  | ✅   | ✅   | ✅           |
-  | gpt-oss-20b                    | ✅  | ✅   | ✅   | ✅           |
-  | llama-3.3-70b-instruct         | ❌  | ✅   | ✅   | ✅           |
-  | llama-4-scout-17b-16e-instruct | ❌  | ✅   | ✅   | ✅           |
-  | qwen3-32b                      | ✅  | ✅   | ✅   | ✅           |
+  | Model          | h100 | RTX Pro 6000 |
+  | -------------- | ---- | ------------ |
+  | gemma-4-31b-it | ✅   | ✅           |
+  | qwen3-32b      | ✅   | ✅           |
 
 - Optional : Run the following step if you want to run the model on an
   accelerator other than `nvidia-rtx-pro` which is the default accelerator for
   this deployment.
 
   ```
-  llmd_accelerator_type="<ACCELERATOR>"
-  sed -i '/^llmd_accelerator_type[[:blank:]]*=/{h;s/=.*/= "'"${llmd_accelerator_type}"'"/};${x;/^$/{s//llmd_accelerator_type="'"${llmd_accelerator_type}"'"/;H};x}' ${ACP_REPO_DIR}/platforms/gke/base/use-cases/inference-ref-arch/examples/llmd/_shared_config/llmd.auto.tfvars
+  llmd_ob_accelerator_type="<ACCELERATOR>"
+  sed -i '/^llmd_ob_accelerator_type[[:blank:]]*=/{h;s/=.*/= "'"${llmd_ob_accelerator_type}"'"/};${x;/^$/{s//llmd_ob_accelerator_type="'"${llmd_ob_accelerator_type}"'"/;H};x}' ${ACP_REPO_DIR}/platforms/gke/base/use-cases/inference-ref-arch/examples/llmd/_shared_config/llmd.auto.tfvars
   ```
 
   Valid values for `ACCELERATOR` are:
 
-  - `l4`
   - `h100`
-  - `h200`
   - `rtx-pro-6000` **(default)**
 
 ### Install Terraform 1.8.0+
@@ -154,8 +142,8 @@ The `deploy-llmd-optimized-baseline.sh` script will perform the following steps:
 
 - Set up base GKE cluster platform and other infrastructure resources required
   for llm-d.
-- Create Gateway and Router for llm-d. You will create model server manually in
-  the following sections of this guide.
+- Create Gateway and Router for llm-d optimized baseline. You will create model
+  server manually in the following sections of this guide.
 
 ## Download the model to Cloud Storage
 
@@ -190,9 +178,9 @@ The `deploy-llmd-optimized-baseline.sh` script will perform the following steps:
 
   ```shell
   watch --color --interval 5 --no-title \
-  "kubectl --namespace=${huggingface_hub_downloader_kubernetes_namespace_name} get job/${HF_MODEL_ID_HASH}-hf-model-to-gcs | GREP_COLORS='mt=01;92' egrep --color=always -e '^' -e 'Complete'
+  "kubectl --namespace=${huggingface_hub_downloader_kubernetes_namespace_name} get job/${LLMD_OB_HF_MODEL_ID_HASH}-hf-model-to-gcs | GREP_COLORS='mt=01;92' egrep --color=always -e '^' -e 'Complete'
   echo '\nLogs(last 10 lines):'
-  kubectl --namespace=${huggingface_hub_downloader_kubernetes_namespace_name} logs job/${HF_MODEL_ID_HASH}-hf-model-to-gcs --all-containers --tail 10"
+  kubectl --namespace=${huggingface_hub_downloader_kubernetes_namespace_name} logs job/${LLMD_OB_HF_MODEL_ID_HASH}-hf-model-to-gcs --all-containers --tail 10"
   ```
 
   When the job is complete, you will see the following:
@@ -221,7 +209,7 @@ The `deploy-llmd-optimized-baseline.sh` script will perform the following steps:
 - Deploy the model server
 
   ```shell
-  kubectl apply --kustomize "${ACP_REPO_DIR}/platforms/gke/base/use-cases/inference-ref-arch/kubernetes-manifests/online-inference-gpu/llmd-optimized-baseline/vllm/${ACCELERATOR_TYPE}-${HF_MODEL_NAME}"
+  kubectl apply --kustomize "${ACP_REPO_DIR}/platforms/gke/base/use-cases/inference-ref-arch/kubernetes-manifests/online-inference-gpu/llmd-optimized-baseline/vllm/${LLMD_OB_ACCELERATOR_TYPE}-${LLMD_OB_HF_MODEL_NAME}"
   ```
 
   The Kubernetes manifests are based on the
@@ -231,9 +219,9 @@ The `deploy-llmd-optimized-baseline.sh` script will perform the following steps:
 
   ```shell
   watch --color --interval 5 --no-title \
-  "kubectl --namespace=${ira_online_gpu_kubernetes_namespace_name} get deployment/ms-inference-scheduling-llmd-modelservice-${ACCELERATOR_TYPE}-${HF_MODEL_NAME} | GREP_COLORS='mt=01;92' egrep --color=always -e '^' -e '1/1     1            1'
+  "kubectl --namespace=${ira_online_gpu_kubernetes_namespace_name} get deployment/ms-inference-scheduling-llmd-modelservice-${LLMD_OB_ACCELERATOR_TYPE}-${LLMD_OB_HF_MODEL_NAME} | GREP_COLORS='mt=01;92' egrep --color=always -e '^' -e '1/1     1            1'
   echo '\nLogs(last 10 lines):'
-  kubectl --namespace=${ira_online_gpu_kubernetes_namespace_name} logs deployment/ms-inference-scheduling-llmd-modelservice-${ACCELERATOR_TYPE}-${HF_MODEL_NAME} --all-containers --tail 10"
+  kubectl --namespace=${ira_online_gpu_kubernetes_namespace_name} logs deployment/ms-inference-scheduling-llmd-modelservice-${LLMD_OB_ACCELERATOR_TYPE}-${LLMD_OB_HF_MODEL_NAME} --all-containers --tail 10"
   ```
 
 ## Verify llm-d deployment is up and running
@@ -260,15 +248,15 @@ The `deploy-llmd-optimized-baseline.sh` script will perform the following steps:
 
   ```
   NAME                                              READY   UP-TO-DATE   AVAILABLE   AGE
-  gaie-inference-scheduling-epp                     1/1     1            1           XXXX
-  ms-inference-scheduling-llmd-modelservice-XXXX    2/2     1            1           XXXX
+  optimized-baseline-epp                            1/1     1            1           XXXX
+  optimized-baseline-nvidia-gpu-vllm-decode-XXX     2/2     1            1           XXXX
   ```
 
   Note:
 
-  - gaie-inference-scheduling-epp is the Gateway API Inference Extension
-    endpoint picker.
-  - ms-inference-scheduling-llmd-modelservice-XXXX is the model server running
+  - optimized-baseline-epp is the Gateway API Inference Extension endpoint
+    picker.
+  - optimized-baseline-nvidia-gpu-vllm-decode-XXX is the model server running
     inference of the model you chose. It may take some time for this deployment
     to be up completely depending upon the GPU availability
 
@@ -282,52 +270,52 @@ The `deploy-llmd-optimized-baseline.sh` script will perform the following steps:
 
   ```
   NAME                                                    READY    STATUS    RESTARTS    AGE
-  pod/gaie-inference-scheduling-epp-XXXX                   1/1      Running    0          XX
-  pod/gradio-XXXX                                          1/1      Running    0          XX
-  pod/pod/ms-inference-scheduling-llmd-modelservice-XXXX   4/4      Running    0          XX
-  pod/pod/ms-inference-scheduling-llmd-modelservice-XXXX   4/4      Running    0          XX
+  pod/optimized-baseline-epp-67597fc6c-d7n2r              1/1      Running    0          XX
+  pod/optimized-baseline-nvidia-gpu-vllm-decode-XXXX      4/4      Running    0          XX
+  pod/optimized-baseline-nvidia-gpu-vllm-decode-XXXX      4/4      Running    0          XX
 
-  NAME                                                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
-  service/gaie-inference-scheduling-epp                 ClusterIP   34.118.230.43    <none>        9002/TCP,9090/TCP   XX
-  service/gaie-inference-scheduling-ips-XXXX            ClusterIP   None             <none>        54321/TCP           XX
-  service/gradio-svc-XXXX                               ClusterIP   34.118.232.165   <none>        8080/TCP            XX
+  NAME                                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)             AGE
+  service/optimized-baseline-epp            ClusterIP   34.118.230.43    <none>        9002/TCP,9090/TCP   XX
+  service/optimized-baseline-ips--XXXX      ClusterIP   None             <none>        54321/TCP           XX
 
-  NAME                                                             READY   UP-TO-DATE   AVAILABLE   AGE
-  deployment.apps/gaie-inference-scheduling-epp                    1/1     1            1           XX
-  deployment.apps/gradio-XXXX                                      1/1     1            1           XX
-  deployment.apps/ms-inference-scheduling-llmd-modelservice-XXXX   2/2     2            2           XX
 
-  NAME                                                              DESIRED   CURRENT   READY   AGE
-  replicaset.apps/gaie-inference-scheduling-epp-XXXX                1         1         1       XX
-  replicaset.apps/gradio-XXXX                                       1         1         1       XX
-  replicaset.apps/ms-inference-scheduling-llmd-modelservice-XXXX    2         2         2       XX
+  NAME                                                                READY   UP-TO-DATE   AVAILABLE   AGE
+  deployment.apps/optimized-baseline-epp                              1/1     1            1           XX
+  deployment.apps/optimized-baseline-nvidia-gpu-vllm-decode-XXXX      2/2     2            2           XX
+
+  NAME                                                                DESIRED   CURRENT   READY   AGE
+  replicaset.apps/optimized-baseline-epp-XXXX                         1         1         1       XX
+  replicaset.apps/optimized-baseline-nvidia-gpu-vllm-decode-XXXX      2         2         2       XX
   ```
 
 - Wait for the model server deployment to be ready before accessing the chat
   interface.
 
   ```
-  watch --color --interval 5 --no-title \
-  "kubectl --namespace=${ira_online_gpu_kubernetes_namespace_name} get deployment/${llmd_ms_deployment_name}-${ACCELERATOR_TYPE}-${HF_MODEL_NAME} | GREP_COLORS='mt=01;92' egrep --color=always -e '^' -e '1/1     1            1'"
+  watch --color --interval 5 --no-title   "kubectl --namespace=${ira_online_gpu_kubernetes_namespace_name} get deployment/${llmd_guide_name}-nvidia-gpu-vllm-decode-${LLMD_OB_ACCELERATOR_TYPE}-${LLMD_OB_HF_MODEL_NAME} | GREP_COLORS='mt=01;92' egrep --color=always -e '^' -e '1/1     1            1'"
   ```
 
 - When the deployment is ready, you will output similar to the following
 
   ```
   NAME                                             READY   UP-TO-DATE   AVAILABLE   AGE
-  ms-inference-scheduling-llmd-modelservice-XXXX   2/2     2            2           XX
+  optimized-baseline-nvidia-gpu-vllm-decode-XXXX   2/2     2            2           XX
   ```
 
 ## Send Test Requests
 
 - Open [Cloud Shell](https://cloud.google.com/shell).
+- Find the IP address of Gateway
+  ```sh
+  export IP=$(kubectl get gateway llm-d-inference-gateway -n ${ira_online_gpu_kubernetes_namespace_name} -o jsonpath='{.status.addresses[0].value}')
+  ```
 - Open a temporary interactive shell inside the cluster:
 
   ```sh
   kubectl run curl-debug --rm -it \
       --image=cfmanteiga/alpine-bash-curl-jq \
       --env="IP=$IP" \
-      --env="NAMESPACE=$NAMESPACE" \
+      --env="NAMESPACE=$ira_online_gpu_kubernetes_namespace_name" \
       -- /bin/bash
   ```
 

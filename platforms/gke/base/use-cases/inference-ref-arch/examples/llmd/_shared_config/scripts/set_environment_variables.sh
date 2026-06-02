@@ -45,3 +45,19 @@ if [[ -v HF_MODEL_ID ]]; then
   HF_MODEL_NAME="${HF_MODEL_NAME,,}"
   export HF_MODEL_NAME
 fi
+
+LLMD_OB_ACCELERATOR_TYPE="${llmd_ob_accelerator_type:-}"
+export LLMD_OB_ACCELERATOR_TYPE
+
+LLMD_OB_HF_MODEL_ID="${llmd_ob_model_id:-}"
+export LLMD_OB_HF_MODEL_ID
+
+if [[ -v LLMD_OB_HF_MODEL_ID ]]; then
+  LLMD_OB_HF_MODEL_ID_HASH=$(echo "${LLMD_OB_HF_MODEL_ID}" | md5sum | cut -c1-8)
+  export LLMD_OB_HF_MODEL_ID_HASH
+
+  LLMD_OB_HF_MODEL_NAME="${LLMD_OB_HF_MODEL_ID_HASH##*/}"
+  LLMD_OB_HF_MODEL_NAME="${LLMD_OB_HF_MODEL_NAME//./-}"
+  LLMD_OB_HF_MODEL_NAME="${LLMD_OB_HF_MODEL_NAME,,}"
+  export LLMD_OB_HF_MODEL_NAME
+fi

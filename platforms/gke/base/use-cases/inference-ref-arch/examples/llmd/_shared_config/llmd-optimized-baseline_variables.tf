@@ -14,7 +14,7 @@
 
 locals {
   llmd__ob_default_name         = "llmd-${var.llmd_guide_name}"
-  llmd_gateway_remote_manifest  = "${var.git_url}/${var.llmd_git_org}/${var.llmd_git_repo}//guides/recipes/gateway/${var.llmd_gateway_type}=${var.llmd_git_branch}"
+  llmd_gateway_remote_manifest  = "${var.git_url}/${var.llmd_git_org}/${var.llmd_git_repo}//guides/recipes/gateway/${var.llmd_gateway_type}?ref=${var.llmd_git_branch}"
   llmd_router_base_helm_values  = "${var.git_raw_url_prefix}/${var.llmd_git_org}/${var.llmd_git_repo}/${var.llmd_git_branch}/guides/recipes/router/base.values.yaml"
   llmd_router_guide_helm_values = "${var.git_raw_url_prefix}/${var.llmd_git_org}/${var.llmd_git_repo}/${var.llmd_git_branch}/guides/${var.llmd_guide_name}/router/${var.llmd_guide_name}.values.yaml"
   #llmd_ob_release_name  = var.llmd_ob_release_name != null ? var.llmd_ob_release_name : "inference-scheduling"
@@ -36,6 +36,23 @@ variable "git_url" {
   default     = "https://github.com"
   description = "Prefix to the git url for llmd repo"
   type        = string
+}
+
+variable "llmd_ob_accelerator_type" {
+  default     = "rtx-pro-6000"
+  description = "accelerator type to serve the model on."
+  type        = string
+
+  validation {
+    condition = contains(
+      [
+        "h100",
+        "rtx-pro-6000",
+      ],
+      var.llmd_ob_accelerator_type
+    )
+    error_message = "'llmd_ob_accelerator_type' value is invalid"
+  }
 }
 
 variable "llmd_git_branch" {
@@ -65,6 +82,23 @@ variable "llmd_guide_name" {
   default     = "optimized-baseline"
   description = "llmd guide name."
   type        = string
+}
+
+variable "llmd_ob_model_id" {
+  default     = "qwen/qwen3-32b"
+  description = "Id for the model to serve."
+  type        = string
+
+  validation {
+    condition = contains(
+      [
+        "google/gemma-4-31b-it",
+        "qwen/qwen3-32b",
+      ],
+      var.llmd_ob_model_id
+    )
+    error_message = "'llmd_ob_model_id' value is invalid"
+  }
 }
 
 variable "kubernetes_version_router_templates" {
