@@ -13,7 +13,10 @@
 # limitations under the License.
 
 locals {
-  llmd__ob_default_name = "llmd-${var.llmd_guide_name}"
+  llmd__ob_default_name         = "llmd-${var.llmd_guide_name}"
+  llmd_gateway_remote_manifest  = "${var.git_url}/${var.llmd_git_org}/${var.llmd_git_repo}//guides/recipes/gateway/${var.llmd_gateway_type}=${var.llmd_git_branch}"
+  llmd_router_base_helm_values  = "${var.git_raw_url_prefix}/${var.llmd_git_org}/${var.llmd_git_repo}/${var.llmd_git_branch}/guides/recipes/router/base.values.yaml"
+  llmd_router_guide_helm_values = "${var.git_raw_url_prefix}/${var.llmd_git_org}/${var.llmd_git_repo}/${var.llmd_git_branch}/guides/${var.llmd_guide_name}/router/${var.llmd_guide_name}.values.yaml"
   #llmd_ob_release_name  = var.llmd_ob_release_name != null ? var.llmd_ob_release_name : "inference-scheduling"
 }
 
@@ -23,8 +26,14 @@ variable "gateway_provider_name" {
   type        = string
 }
 
-variable "git_url_prefix" {
+variable "git_raw_url_prefix" {
   default     = "https://raw.githubusercontent.com"
+  description = "Prefix to the git url for llmd repo"
+  type        = string
+}
+
+variable "git_url" {
+  default     = "https://github.com"
   description = "Prefix to the git url for llmd repo"
   type        = string
 }
@@ -47,6 +56,11 @@ variable "llmd_git_repo" {
   type        = string
 }
 
+variable "llmd_gateway_type" {
+  default     = "gke-l7-rilb"
+  description = "Gateway type for llmd"
+  type        = string
+}
 variable "llmd_guide_name" {
   default     = "optimized-baseline"
   description = "llmd guide name."

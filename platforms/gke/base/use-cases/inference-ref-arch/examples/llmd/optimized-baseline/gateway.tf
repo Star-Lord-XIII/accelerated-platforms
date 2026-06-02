@@ -1,4 +1,4 @@
-# Copyright 2025 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-data "google_project" "cluster" {
-  project_id = local.cluster_project_id
+module "kubectl_apply_gateway_manifests" {
+  source                      = "../../../../../modules/kubectl_apply"
+  apply_server_side           = true
+  kubeconfig_file             = data.local_file.kubeconfig.filename
+  manifest                    = local.llmd_gateway_remote_manifest
+  manifest_includes_namespace = false
+  namespace                   = local.ira_online_gpu_kubernetes_namespace_name
+  use_kustomize               = true
 }
