@@ -26,7 +26,6 @@ nameSuffix: -l4-whisper-large-v3
 patches:
   - path: patch-nodeselector.yaml
   - path: patch-resources.yaml
-  - path: patch-vllm-audio.yaml
 
 replacements:
   - source:

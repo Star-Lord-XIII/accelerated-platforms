@@ -48,7 +48,7 @@ variable "ira_online_gpu_kubernetes_service_account_name" {
 }
 
 variable "ira_online_gpu_vllm_image_url" {
-  default     = "docker.io/vllm/vllm-openai:v0.11.0"
+  default     = "us-central1-docker.pkg.dev/euphonia-app-dev/vllm/vllm-audio:latest"
   description = "The URL for the GPU vLLM container image."
   type        = string
 }
