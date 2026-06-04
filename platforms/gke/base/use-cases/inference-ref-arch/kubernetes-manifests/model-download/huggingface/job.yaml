@@ -36,8 +36,6 @@ spec:
               value: /local/hf/xet
             - name: HF_XET_NUM_CONCURRENT_RANGE_GETS
               value: "16"
-            - name: HF_XET_HIGH_PERFORMANCE
-              value: "1"
             - name: MODEL_ID
               valueFrom:
                 configMapKeyRef:
